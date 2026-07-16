@@ -52,6 +52,21 @@ unauthenticated scan first.
 | 60119 | Microsoft Windows SMB Share Permissions Enumeration | Network shares and their ACLs. |
 | 10395 | Microsoft Windows SMB Shares Enumeration | Enumerated shares. |
 
+## Hardware & firmware inventory
+
+Mostly the **DMI/SMBIOS** family (`Family: General`, cross-platform, credentialed).
+Great for physical-asset inventory, warranty/serial tracking, EOL hardware, and
+spotting VM vs. bare-metal. Discover the family with `query="via DMI"`.
+
+| ID | Name | What it returns |
+|----|------|-----------------|
+| 35351 | System Information Enumeration (via DMI) | System hardware overview — BIOS vendor/version/date, manufacturer, product/model, serial number, chassis/asset tag, UUID. |
+| 45432 | Processor Information (via DMI) | CPU make/model, speed, core/socket counts. |
+| 45433 | Memory Information (via DMI) | Installed memory devices/DIMMs, sizes, slots, form factor. |
+| 105778 | Intel Management Engine AMT Remote Access Enabled | Presence of an accessible out-of-band hardware management interface (security-relevant). |
+| 35716 | Ethernet Card Manufacturer Detection | NIC MAC → hardware vendor (also under Network). |
+| 63080 | Microsoft Windows Mounted Devices | Removable/USB storage device history (also under Forensic artifacts). |
+
 ## Security controls (posture, gaps)
 
 | ID | Name | What it returns |
@@ -81,6 +96,9 @@ Map a user question to a search term, then filter to `Severity: Info`:
 - "is AV/EDR running" → `query="antivirus enumeration"` → 45051
 - "deleted files / recycle bin" → `query="recycle bin"` → 92429
 - "autoruns / persistence" → `query="startup software enumeration"` → 58452
+- "hardware / BIOS / model / serial" → `query="via DMI"` → 35351 / 45432 / 45433
+- "CPU / processor" → `query="processor information"` → 45432
+- "RAM / memory" → `query="memory information"` → 45433
 
 When the user wants *everything* a scan gathered on a host, don't guess a list —
 pull the asset's full finding set and filter to Info severity (see

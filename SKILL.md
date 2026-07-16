@@ -28,9 +28,10 @@ they are the **detailed host telemetry** the scanner gathered along the way.
 A credentialed scan of a single Windows host routinely produces dozens of info
 plugins covering the machine's entire posture — every running process, every
 installed application and hotfix, every local and cached domain account, network
-interfaces, shares and their permissions, services and their configs, AV/EDR and
-firewall status, and forensic artifacts like recycle-bin contents. On Linux/Unix
-and macOS the equivalents come through SSH enumeration plugins.
+interfaces, shares and their permissions, services and their configs, physical
+hardware (CPU, memory, BIOS/model/serial via DMI), AV/EDR and firewall status, and
+forensic artifacts like recycle-bin contents. On Linux/Unix and macOS the
+equivalents come through SSH and DMI enumeration plugins.
 
 This is a large, mostly-untapped inventory and forensics dataset that is already
 sitting in the customer's Tenable deployment. This skill teaches how to **find the

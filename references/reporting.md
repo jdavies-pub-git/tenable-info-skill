@@ -22,6 +22,7 @@ Scan date: <date> · Source: Tenable VM · Credentialed: <yes/no>
 ## Local & Domain Accounts   (plugins 171956 / 171957)
 ## Running Processes         (plugin 70329 / 110483)
 ## Services & Startup        (plugins 33813 / 58452)
+## Hardware & firmware (CPU, memory, BIOS/model/serial)  (35351 / 45432 / 45433)
 ## Network (interfaces, shares, share permissions)   (24272 / 10395 / 60119)
 ## Security Controls (AV / firewall)                 (45051 / 45052)
 ## Forensic Artifacts (recycle bin, mounted devices) (92429 / 63080)
