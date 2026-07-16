@@ -32,9 +32,48 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 
 TIO_URL = os.environ.get("TIO_URL", "https://cloud.tenable.com")
+
+# Control chars to strip from untrusted output before printing (keep \t \n \r).
+_CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+# Leading chars that spreadsheet apps treat as the start of a formula.
+_CSV_INJECT_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def require_https_url():
+    """Fix #2: never send API keys to a non-HTTPS or unexpected endpoint.
+
+    TIO_URL comes from the environment; if it were http:// or pointed at an
+    attacker-controlled host, the X-ApiKeys header would leak the credentials.
+    Enforce https and warn if the host isn't a Tenable cloud.
+    """
+    from urllib.parse import urlparse
+    u = urlparse(TIO_URL)
+    if u.scheme != "https":
+        sys.exit(f"ERROR: TIO_URL must use https:// (got {TIO_URL!r}). Refusing to send API keys.")
+    if u.hostname and not u.hostname.lower().endswith("tenable.com"):
+        sys.stderr.write(f"WARNING: TIO_URL host {u.hostname!r} is not a *.tenable.com endpoint.\n")
+
+
+def strip_ctrl(s):
+    """Fix #3: remove terminal control sequences from untrusted host output."""
+    return _CTRL_RE.sub("", s or "")
+
+
+def csv_safe(v):
+    """Fix #1: neutralize CSV/formula injection from scanned-host data.
+
+    Plugin output comes from remote (possibly compromised) hosts. A value like
+    '=cmd|...' would execute as a formula when opened in Excel/Sheets, so prefix
+    any risky leading character with a single quote.
+    """
+    s = "" if v is None else str(v)
+    if s and s[0] in _CSV_INJECT_PREFIXES:
+        s = "'" + s
+    return s
 
 
 def get_keys():
@@ -126,6 +165,8 @@ def main():
     p.add_argument("--out", help="Output file path (for csv/json)")
     args = p.parse_args()
 
+    require_https_url()
+
     filters = []
     if args.ip:
         filters.append(("host.target", "eq", args.ip))
@@ -151,15 +192,17 @@ def main():
 
     if args.format == "text":
         for r in rows:
-            print(f"\n=== {r['hostname'] or '(unknown host)'}  {r['ip']}  [{r['asset_id']}] ===")
-            print(r["plugin_output"])
+            header = strip_ctrl(f"=== {r['hostname'] or '(unknown host)'}  {r['ip']}  [{r['asset_id']}] ===")
+            print("\n" + header)
+            print(strip_ctrl(r["plugin_output"]))
         print(f"\n{len(rows)} host record(s), plugin {args.plugin_id}.")
     elif args.format == "csv":
         out = args.out or f"plugin_{args.plugin_id}_output.csv"
         with open(out, "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=["hostname", "ip", "asset_id", "plugin_output"])
             w.writeheader()
-            w.writerows(rows)
+            for r in rows:
+                w.writerow({k: csv_safe(v) for k, v in r.items()})
         print(f"Wrote {len(rows)} rows to {out}")
     else:
         out = args.out or f"plugin_{args.plugin_id}_output.json"
