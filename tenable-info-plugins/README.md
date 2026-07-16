@@ -110,4 +110,4 @@ or sovereign clouds, set `TIO_URL` to the appropriate API host.
 
 ## License
 
-Add your license of choice (e.g. MIT) here before publishing.
+Released under the [MIT License](LICENSE).
